@@ -1,0 +1,277 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Production Analytics</title>
+
+<style>
+
+body{
+font-family:"Segoe UI",sans-serif;
+background:#eef2f7;
+margin:0;
+padding:20px;
+}
+
+/* FILTER BAR */
+
+.filterBar{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+}
+
+.filterBar input{
+padding:8px;
+border:1px solid #cbd5e1;
+border-radius:6px;
+}
+
+.filterBar button{
+background:#2563eb;
+color:white;
+border:none;
+padding:8px 16px;
+border-radius:6px;
+cursor:pointer;
+font-weight:600;
+}
+
+/* KPI GRID */
+
+.kpiGrid{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:16px;
+}
+
+/* KPI CARD */
+
+.kpiCard{
+background:white;
+border-radius:12px;
+padding:18px;
+box-shadow:0 6px 16px rgba(0,0,0,.06);
+}
+
+.kpiTitle{
+font-size:13px;
+color:#64748b;
+}
+
+.kpiValue{
+font-size:28px;
+font-weight:600;
+color:#0f172a;
+margin-top:4px;
+}
+
+.kpiSub{
+font-size:12px;
+color:#94a3b8;
+margin-top:4px;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- FILTER -->
+
+<div class="filterBar">
+
+<input type="date" id="datePicker">
+
+<button onclick="generateData()">Generate</button>
+
+</div>
+
+<!-- KPI CARDS -->
+
+<div class="kpiGrid">
+
+<div class="kpiCard">
+<div class="kpiTitle">Total Production</div>
+<div class="kpiValue" id="totalProduction">--</div>
+<div class="kpiSub">Actual Pieces</div>
+</div>
+
+<div class="kpiCard">
+<div class="kpiTitle">Target Production</div>
+<div class="kpiValue" id="targetProduction">--</div>
+<div class="kpiSub">Planned Pieces</div>
+</div>
+
+<div class="kpiCard">
+<div class="kpiTitle">Production Achievement</div>
+<div class="kpiValue" id="achievement">--</div>
+<div class="kpiSub">Target vs Actual</div>
+</div>
+
+<div class="kpiCard">
+<div class="kpiTitle">Best Hour</div>
+<div class="kpiValue" id="bestHour">--</div>
+<div class="kpiSub">Highest Production</div>
+</div>
+
+<div class="kpiCard">
+<div class="kpiTitle">Worst Hour</div>
+<div class="kpiValue" id="worstHour">--</div>
+<div class="kpiSub">Lowest Production</div>
+</div>
+
+</div>
+
+
+<script>
+
+const API="https://plantwiz.pimateck.in/api";
+
+/* YOUR DEVICE ID */
+const DEVICE_ID="991cf500-661a-11f0-90f1-775fee303094";
+
+/* JWT FROM URL */
+const JWT=new URLSearchParams(location.search).get("token") || "";
+
+
+/* GENERATE BUTTON */
+
+function generateData(){
+
+const date=document.getElementById("datePicker").value;
+
+if(!date){
+alert("Please select date");
+return;
+}
+
+loadProduction(date);
+
+}
+
+
+/* LOAD PRODUCTION DATA */
+
+async function loadProduction(date){
+
+const start=new Date(date).getTime();
+const end=start+86400000;
+
+const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute&startTs=${start}&endTs=${end}&limit=5000&agg=NONE`;
+
+const res=await fetch(url,{
+headers:{
+"X-Authorization":"Bearer "+JWT
+}
+});
+
+const data=await res.json();
+
+calculateKPIs(data.Production_Per_Minute || []);
+
+loadTarget();
+
+}
+
+
+/* LOAD TARGET */
+
+async function loadTarget(){
+
+const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Target_Quantity&limit=1`;
+
+const res=await fetch(url,{
+headers:{
+"X-Authorization":"Bearer "+JWT
+}
+});
+
+const data=await res.json();
+
+if(data.Target_Quantity){
+
+const target=Number(data.Target_Quantity[0].value);
+
+document.getElementById("targetProduction").innerText=target;
+
+window.targetProduction=target;
+
+}
+
+}
+
+
+/* KPI CALCULATION */
+
+function calculateKPIs(productionData){
+
+let total=0;
+let hourly={};
+
+productionData.forEach(p=>{
+
+const value=Number(p.value);
+const time=new Date(p.ts);
+
+total+=value;
+
+const hour=time.getHours();
+
+if(!hourly[hour]) hourly[hour]=0;
+
+hourly[hour]+=value;
+
+});
+
+document.getElementById("totalProduction").innerText=total;
+
+
+/* ACHIEVEMENT */
+
+if(window.targetProduction){
+
+const ach=((total/window.targetProduction)*100).toFixed(1);
+
+document.getElementById("achievement").innerText=ach+"%";
+
+}
+
+
+/* BEST & WORST HOUR */
+
+let max=-Infinity;
+let min=Infinity;
+let best=null;
+let worst=null;
+
+Object.keys(hourly).forEach(h=>{
+
+const val=hourly[h];
+
+if(val>max){
+max=val;
+best=h;
+}
+
+if(val<min){
+min=val;
+worst=h;
+}
+
+});
+
+if(best!==null)
+document.getElementById("bestHour").innerText=best+":00";
+
+if(worst!==null)
+document.getElementById("worstHour").innerText=worst+":00";
+
+}
+
+</script>
+
+</body>
+</html>
+```
