@@ -44,9 +44,8 @@ font-weight:600;
 display:grid;
 grid-template-columns:repeat(5,1fr);
 gap:16px;
+margin-bottom:20px;
 }
-
-/* KPI CARD */
 
 .kpiCard{
 background:white;
@@ -73,6 +72,97 @@ color:#94a3b8;
 margin-top:4px;
 }
 
+/* REALTIME STATUS */
+
+.statusCard{
+background:white;
+border-radius:12px;
+padding:20px;
+box-shadow:0 6px 16px rgba(0,0,0,.06);
+}
+
+.statusHeader{
+display:flex;
+justify-content:space-between;
+margin-bottom:16px;
+font-weight:600;
+}
+
+.badge{
+background:#fecaca;
+color:#b91c1c;
+padding:4px 10px;
+border-radius:20px;
+font-size:12px;
+}
+
+.statusGrid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:14px;
+margin-bottom:18px;
+}
+
+.statusBox{
+padding:14px;
+border-radius:10px;
+}
+
+.statusBox.blue{background:#e0e7ff}
+.statusBox.red{background:#fee2e2}
+.statusBox.gray{background:#f1f5f9}
+
+.boxTitle{
+font-size:13px;
+color:#475569;
+}
+
+.boxValue{
+font-size:26px;
+font-weight:600;
+margin-top:4px;
+}
+
+.boxSub{
+font-size:12px;
+color:#64748b;
+}
+
+.progressTitle{
+font-size:13px;
+margin-bottom:6px;
+}
+
+.progressBar{
+height:12px;
+background:#e5e7eb;
+border-radius:8px;
+overflow:hidden;
+}
+
+#progressFill{
+height:100%;
+width:0%;
+background:#ef4444;
+}
+
+#progressLabel{
+margin-top:6px;
+font-size:12px;
+color:#64748b;
+}
+
+.alertBox{
+margin-top:12px;
+background:#fee2e2;
+border:1px solid #fca5a5;
+padding:10px;
+border-radius:8px;
+font-size:13px;
+color:#b91c1c;
+display:none;
+}
+
 </style>
 </head>
 
@@ -81,11 +171,8 @@ margin-top:4px;
 <!-- FILTER -->
 
 <div class="filterBar">
-
 <input type="date" id="datePicker">
-
 <button onclick="generateData()">Generate</button>
-
 </div>
 
 <!-- KPI CARDS -->
@@ -124,15 +211,56 @@ margin-top:4px;
 
 </div>
 
+<!-- REALTIME STATUS -->
+
+<div class="statusCard">
+
+<div class="statusHeader">
+Real-Time Production Status
+<span id="statusBadge" class="badge">Behind Schedule</span>
+</div>
+
+<div class="statusGrid">
+
+<div class="statusBox blue">
+<div class="boxTitle">Current Hour Target</div>
+<div class="boxValue" id="currentTarget">--</div>
+<div class="boxSub">pieces per hour</div>
+</div>
+
+<div class="statusBox red">
+<div class="boxTitle">Current Production Pace</div>
+<div class="boxValue" id="currentProduction">--</div>
+<div class="boxSub" id="pacePercent"></div>
+</div>
+
+<div class="statusBox gray">
+<div class="boxTitle">Pace Variance</div>
+<div class="boxValue" id="variance">--</div>
+<div class="boxSub">pieces vs target</div>
+</div>
+
+</div>
+
+<div class="progressTitle">Production Pace Indicator</div>
+
+<div class="progressBar">
+<div id="progressFill"></div>
+</div>
+
+<div id="progressLabel"></div>
+
+<div id="alertBox" class="alertBox">
+Alert: Current production pace is below target. Intervention required to meet hourly production goals.
+</div>
+
+</div>
+
 
 <script>
 
 const API="https://plantwiz.pimateck.in/api";
-
-/* YOUR DEVICE ID */
 const DEVICE_ID="991cf500-661a-11f0-90f1-775fee303094";
-
-/* JWT FROM URL */
 const JWT=new URLSearchParams(location.search).get("token") || "";
 
 
@@ -148,6 +276,7 @@ return;
 }
 
 loadProduction(date);
+loadRealtime();
 
 }
 
@@ -162,9 +291,7 @@ const end=start+86400000;
 const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute&startTs=${start}&endTs=${end}&limit=5000&agg=NONE`;
 
 const res=await fetch(url,{
-headers:{
-"X-Authorization":"Bearer "+JWT
-}
+headers:{ "X-Authorization":"Bearer "+JWT }
 });
 
 const data=await res.json();
@@ -183,9 +310,7 @@ async function loadTarget(){
 const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Target_Quantity&limit=1`;
 
 const res=await fetch(url,{
-headers:{
-"X-Authorization":"Bearer "+JWT
-}
+headers:{ "X-Authorization":"Bearer "+JWT }
 });
 
 const data=await res.json();
@@ -227,9 +352,6 @@ hourly[hour]+=value;
 
 document.getElementById("totalProduction").innerText=total;
 
-
-/* ACHIEVEMENT */
-
 if(window.targetProduction){
 
 const ach=((total/window.targetProduction)*100).toFixed(1);
@@ -237,9 +359,6 @@ const ach=((total/window.targetProduction)*100).toFixed(1);
 document.getElementById("achievement").innerText=ach+"%";
 
 }
-
-
-/* BEST & WORST HOUR */
 
 let max=-Infinity;
 let min=Infinity;
@@ -250,23 +369,84 @@ Object.keys(hourly).forEach(h=>{
 
 const val=hourly[h];
 
-if(val>max){
-max=val;
-best=h;
-}
-
-if(val<min){
-min=val;
-worst=h;
-}
+if(val>max){ max=val; best=h; }
+if(val<min){ min=val; worst=h; }
 
 });
 
-if(best!==null)
-document.getElementById("bestHour").innerText=best+":00";
+if(best!==null) document.getElementById("bestHour").innerText=best+":00";
+if(worst!==null) document.getElementById("worstHour").innerText=worst+":00";
 
-if(worst!==null)
-document.getElementById("worstHour").innerText=worst+":00";
+}
+
+
+/* REALTIME CALCULATION */
+
+async function loadRealtime(){
+
+const now=new Date();
+
+const hourStart=new Date(
+now.getFullYear(),
+now.getMonth(),
+now.getDate(),
+now.getHours(),
+0,
+0
+).getTime();
+
+const nowTs=now.getTime();
+
+const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${hourStart}&endTs=${nowTs}&limit=1000&agg=NONE`;
+
+const res=await fetch(url,{
+headers:{ "X-Authorization":"Bearer "+JWT }
+});
+
+const data=await res.json();
+
+const prod=data.Production_Per_Minute || [];
+const speed=data.Standard_Speed || [];
+
+let production=0;
+let targetTillNow=0;
+
+prod.forEach(p=>production+=Number(p.value));
+speed.forEach(s=>targetTillNow+=Number(s.value));
+
+const currentMinute=now.getMinutes();
+const remaining=60-currentMinute;
+
+let latestSpeed=0;
+
+if(speed.length>0)
+latestSpeed=Number(speed[speed.length-1].value);
+
+const currentHourTarget=targetTillNow+(latestSpeed*remaining);
+const variance=targetTillNow-production;
+
+const pacePercent=(production/currentHourTarget)*100;
+
+document.getElementById("currentTarget").innerText=Math.round(currentHourTarget);
+document.getElementById("currentProduction").innerText=Math.round(production);
+document.getElementById("variance").innerText=Math.round(variance);
+
+document.getElementById("pacePercent").innerText=Math.round(pacePercent)+"% of target";
+
+document.getElementById("progressFill").style.width=pacePercent+"%";
+document.getElementById("progressLabel").innerText=Math.round(pacePercent)+"%";
+
+if(pacePercent<90){
+
+document.getElementById("statusBadge").innerText="Behind Schedule";
+document.getElementById("alertBox").style.display="block";
+
+}else{
+
+document.getElementById("statusBadge").innerText="On Track";
+document.getElementById("alertBox").style.display="none";
+
+}
 
 }
 
