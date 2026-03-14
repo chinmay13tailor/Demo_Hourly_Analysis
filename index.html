@@ -15,7 +15,7 @@ margin:0;
 padding:20px;
 }
 
-/* FILTER BAR */
+/* FILTER */
 
 .filterBar{
 display:flex;
@@ -39,7 +39,7 @@ cursor:pointer;
 font-weight:600;
 }
 
-/* KPI GRID */
+/* KPI */
 
 .kpiGrid{
 display:grid;
@@ -63,17 +63,15 @@ color:#64748b;
 .kpiValue{
 font-size:28px;
 font-weight:600;
-color:#0f172a;
 margin-top:4px;
 }
 
 .kpiSub{
 font-size:12px;
 color:#94a3b8;
-margin-top:4px;
 }
 
-/* REALTIME STATUS */
+/* REALTIME */
 
 .statusCard{
 background:white;
@@ -122,17 +120,11 @@ color:#475569;
 .boxValue{
 font-size:26px;
 font-weight:600;
-margin-top:4px;
 }
 
 .boxSub{
 font-size:12px;
 color:#64748b;
-}
-
-.progressTitle{
-font-size:13px;
-margin-bottom:6px;
 }
 
 .progressBar{
@@ -148,12 +140,6 @@ width:0%;
 background:#ef4444;
 }
 
-#progressLabel{
-margin-top:6px;
-font-size:12px;
-color:#64748b;
-}
-
 .alertBox{
 margin-top:12px;
 background:#fee2e2;
@@ -161,7 +147,6 @@ border:1px solid #fca5a5;
 padding:10px;
 border-radius:8px;
 font-size:13px;
-color:#b91c1c;
 display:none;
 }
 
@@ -172,49 +157,40 @@ background:white;
 border-radius:12px;
 padding:20px;
 box-shadow:0 6px 16px rgba(0,0,0,.06);
+margin-bottom:20px;
 }
 
 .chartTitle{
 font-weight:600;
 margin-bottom:10px;
 }
-  /* HEATMAP */
+
+/* HEATMAP */
 
 .heatmapCard{
 background:white;
 border-radius:12px;
 padding:20px;
-margin-top:20px;
 box-shadow:0 6px 16px rgba(0,0,0,.06);
-}
-
-.heatmapTitle{
-font-weight:600;
-margin-bottom:10px;
 }
 
 .heatmapLegend{
 display:flex;
 gap:20px;
-font-size:13px;
-margin-bottom:16px;
-}
-
-.legendItem{
-display:flex;
-align-items:center;
-gap:6px;
+margin-bottom:15px;
 }
 
 .legendBox{
 width:14px;
 height:14px;
 border-radius:3px;
+display:inline-block;
+margin-right:5px;
 }
 
-.legendBox.green{background:#22c55e;}
-.legendBox.yellow{background:#f59e0b;}
-.legendBox.red{background:#ef4444;}
+.green{background:#22c55e;}
+.yellow{background:#f59e0b;}
+.red{background:#ef4444;}
 
 .heatmapGrid{
 display:grid;
@@ -228,28 +204,11 @@ border-radius:8px;
 text-align:center;
 color:white;
 font-weight:600;
-font-size:14px;
-}
-
-.cellHour{
-font-size:12px;
-opacity:.9;
-}
-
-.cellPercent{
-font-size:18px;
 }
 
 .grayCell{
 background:#cbd5e1;
 color:#475569;
-}
-  .chartCard{
-background:white;
-border-radius:12px;
-padding:20px;
-box-shadow:0 6px 16px rgba(0,0,0,.06);
-max-height:350px;
 }
 
 </style>
@@ -257,14 +216,12 @@ max-height:350px;
 
 <body>
 
-<!-- FILTER -->
-
 <div class="filterBar">
 <input type="date" id="datePicker">
 <button onclick="generateData()">Generate</button>
 </div>
 
-<!-- KPI CARDS -->
+<!-- KPI -->
 
 <div class="kpiGrid">
 
@@ -277,30 +234,26 @@ max-height:350px;
 <div class="kpiCard">
 <div class="kpiTitle">Target Production</div>
 <div class="kpiValue" id="targetProduction">--</div>
-<div class="kpiSub">Planned Pieces</div>
 </div>
 
 <div class="kpiCard">
 <div class="kpiTitle">Production Achievement</div>
 <div class="kpiValue" id="achievement">--</div>
-<div class="kpiSub">Target vs Actual</div>
 </div>
 
 <div class="kpiCard">
 <div class="kpiTitle">Best Hour</div>
 <div class="kpiValue" id="bestHour">--</div>
-<div class="kpiSub">Highest Production</div>
 </div>
 
 <div class="kpiCard">
 <div class="kpiTitle">Worst Hour</div>
 <div class="kpiValue" id="worstHour">--</div>
-<div class="kpiSub">Lowest Production</div>
 </div>
 
 </div>
 
-<!-- REALTIME STATUS -->
+<!-- REALTIME -->
 
 <div class="statusCard">
 
@@ -314,87 +267,69 @@ Real-Time Production Status
 <div class="statusBox blue">
 <div class="boxTitle">Current Hour Target</div>
 <div class="boxValue" id="currentTarget">--</div>
-<div class="boxSub">pieces per hour</div>
 </div>
 
 <div class="statusBox red">
 <div class="boxTitle">Current Production Pace</div>
 <div class="boxValue" id="currentProduction">--</div>
-<div class="boxSub" id="pacePercent"></div>
 </div>
 
 <div class="statusBox gray">
 <div class="boxTitle">Pace Variance</div>
 <div class="boxValue" id="variance">--</div>
-<div class="boxSub">pieces vs target</div>
 </div>
 
 </div>
-
-<div class="progressTitle">Production Pace Indicator</div>
 
 <div class="progressBar">
 <div id="progressFill"></div>
 </div>
 
-<div id="progressLabel"></div>
-
 <div id="alertBox" class="alertBox">
-Alert: Current production pace is below target. Intervention required to meet hourly production goals.
+Production pace is below target
 </div>
 
 </div>
 
-<!-- PRODUCTION TREND -->
+<!-- CHART -->
 
 <div class="chartCard">
-
 <div class="chartTitle">Hourly Production Comparison</div>
-
-<canvas id="productionChart" height="80"></canvas>
-
+<div style="height:220px">
+<canvas id="productionChart"></canvas>
 </div>
-  <div class="heatmapCard">
+</div>
 
-<div class="heatmapTitle">Production Loss Heatmap</div>
+<!-- HEATMAP -->
+
+<div class="heatmapCard">
+
+<div class="chartTitle">Production Loss Heatmap</div>
 
 <div class="heatmapLegend">
-
-<span class="legendItem">
-<span class="legendBox green"></span> Target Achieved (>95%)
-</span>
-
-<span class="legendItem">
-<span class="legendBox yellow"></span> Slight Delay (75-95%)
-</span>
-
-<span class="legendItem">
-<span class="legendBox red"></span> Major Loss (<75%)
-</span>
-
+<div><span class="legendBox green"></span>Target Achieved</div>
+<div><span class="legendBox yellow"></span>Slight Delay</div>
+<div><span class="legendBox red"></span>Major Loss</div>
 </div>
 
 <div id="heatmapGrid" class="heatmapGrid"></div>
 
 </div>
 
-
 <script>
 
 const API="https://plantwiz.pimateck.in/api";
 const DEVICE_ID="991cf500-661a-11f0-90f1-775fee303094";
-const JWT=new URLSearchParams(location.search).get("token") || "";
+const JWT=new URLSearchParams(location.search).get("token")||"";
 
 let productionChart;
-
-/* GENERATE BUTTON */
 
 function generateData(){
 
 const date=document.getElementById("datePicker").value;
 
 if(!date){
-alert("Please select date");
+alert("Select date");
 return;
 }
 
@@ -405,7 +340,7 @@ loadHeatmap(date);
 
 }
 
-/* LOAD PRODUCTION DATA */
+/* KPI */
 
 async function loadProduction(date){
 
@@ -414,75 +349,29 @@ const end=start+86400000;
 
 const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute&startTs=${start}&endTs=${end}&limit=5000&agg=NONE`;
 
-const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
+const res=await fetch(url,{headers:{"X-Authorization":"Bearer "+JWT}});
 const data=await res.json();
 
-calculateKPIs(data.Production_Per_Minute || []);
-loadTarget();
-
-}
-
-/* LOAD TARGET */
-
-async function loadTarget(){
-
-const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Target_Quantity&limit=1`;
-
-const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
-const data=await res.json();
-
-if(data.Target_Quantity){
-
-const target=Number(data.Target_Quantity[0].value);
-
-document.getElementById("targetProduction").innerText=target;
-
-window.targetProduction=target;
-
-}
-
-}
-
-/* KPI CALCULATION */
-
-function calculateKPIs(productionData){
+const prod=data.Production_Per_Minute||[];
 
 let total=0;
 let hourly={};
 
-productionData.forEach(p=>{
-
-const value=Number(p.value);
-const hour=new Date(p.ts).getHours();
-
-total+=value;
-
-if(!hourly[hour]) hourly[hour]=0;
-hourly[hour]+=value;
-
+prod.forEach(p=>{
+const v=Number(p.value);
+const h=new Date(p.ts).getHours();
+total+=v;
+hourly[h]=(hourly[h]||0)+v;
 });
 
 document.getElementById("totalProduction").innerText=total;
 
-if(window.targetProduction){
-
-const ach=((total/window.targetProduction)*100).toFixed(1);
-document.getElementById("achievement").innerText=ach+"%";
-
-}
-
-let max=-Infinity;
-let min=Infinity;
-let best=null;
-let worst=null;
+let max=-Infinity,min=Infinity,best=null,worst=null;
 
 Object.keys(hourly).forEach(h=>{
-
-const val=hourly[h];
-
-if(val>max){max=val;best=h;}
-if(val<min){min=val;worst=h;}
-
+let v=hourly[h];
+if(v>max){max=v;best=h}
+if(v<min){min=v;worst=h}
 });
 
 if(best!==null) document.getElementById("bestHour").innerText=best+":00";
@@ -490,123 +379,101 @@ if(worst!==null) document.getElementById("worstHour").innerText=worst+":00";
 
 }
 
-/* REALTIME STATUS */
+/* REALTIME */
 
 async function loadRealtime(){
 
 const now=new Date();
 
-const hourStart=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours(),0,0).getTime();
-const nowTs=now.getTime();
+const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours(),0,0).getTime();
 
-const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${hourStart}&endTs=${nowTs}&limit=1000&agg=NONE`;
+const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${start}&endTs=${Date.now()}&limit=1000`;
 
-const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
+const res=await fetch(url,{headers:{"X-Authorization":"Bearer "+JWT}});
 const data=await res.json();
 
 const prod=data.Production_Per_Minute||[];
 const speed=data.Standard_Speed||[];
 
-let production=0;
-let targetTillNow=0;
+let production=0,target=0;
 
 prod.forEach(p=>production+=Number(p.value));
-speed.forEach(s=>targetTillNow+=Number(s.value));
+speed.forEach(s=>target+=Number(s.value));
 
-const remaining=60-now.getMinutes();
+let remaining=60-now.getMinutes();
+let latest=speed.length?Number(speed[speed.length-1].value):0;
 
-let latestSpeed=speed.length?Number(speed[speed.length-1].value):0;
+let hourTarget=target+(latest*remaining);
+let variance=target-production;
 
-const currentHourTarget=targetTillNow+(latestSpeed*remaining);
-const variance=targetTillNow-production;
-const pacePercent=(production/currentHourTarget)*100;
+let percent=(production/hourTarget)*100;
 
-document.getElementById("currentTarget").innerText=Math.round(currentHourTarget);
+document.getElementById("currentTarget").innerText=Math.round(hourTarget);
 document.getElementById("currentProduction").innerText=Math.round(production);
 document.getElementById("variance").innerText=Math.round(variance);
 
-document.getElementById("pacePercent").innerText=Math.round(pacePercent)+"% of target";
+document.getElementById("progressFill").style.width=percent+"%";
 
-document.getElementById("progressFill").style.width=pacePercent+"%";
-document.getElementById("progressLabel").innerText=Math.round(pacePercent)+"%";
-
-if(pacePercent<90){
-document.getElementById("statusBadge").innerText="Behind Schedule";
+if(percent<90){
 document.getElementById("alertBox").style.display="block";
-}else{
-document.getElementById("statusBadge").innerText="On Track";
-document.getElementById("alertBox").style.display="none";
 }
 
 }
 
-/* TREND CHART */
+/* TREND */
 
 async function loadTrend(date){
 
 const start=new Date(date).getTime();
 const end=start+86400000;
 
-const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${start}&endTs=${end}&limit=5000&agg=NONE`;
+const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${start}&endTs=${end}&limit=5000`;
 
-const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
+const res=await fetch(url,{headers:{"X-Authorization":"Bearer "+JWT}});
 const data=await res.json();
 
 const prod=data.Production_Per_Minute||[];
 const speed=data.Standard_Speed||[];
 
-let hourlyActual={};
-let hourlyTarget={};
+let actual={},target={};
 
 prod.forEach(p=>{
-const hour=new Date(p.ts).getHours();
-if(!hourlyActual[hour]) hourlyActual[hour]=0;
-hourlyActual[hour]+=Number(p.value);
+const h=new Date(p.ts).getHours();
+actual[h]=(actual[h]||0)+Number(p.value);
 });
 
 speed.forEach(s=>{
-const hour=new Date(s.ts).getHours();
-if(!hourlyTarget[hour]) hourlyTarget[hour]=0;
-hourlyTarget[hour]+=Number(s.value);
+const h=new Date(s.ts).getHours();
+target[h]=(target[h]||0)+Number(s.value);
 });
 
-const hours=[...new Set([...Object.keys(hourlyActual),...Object.keys(hourlyTarget)])].sort();
+const hours=[...new Set([...Object.keys(actual),...Object.keys(target)])].sort((a,b)=>a-b);
 
 const labels=hours.map(h=>h+":00");
-const actual=hours.map(h=>hourlyActual[h]||0);
-const target=hours.map(h=>hourlyTarget[h]||0);
+const actualData=hours.map(h=>actual[h]||0);
+const targetData=hours.map(h=>target[h]||0);
 
 if(productionChart) productionChart.destroy();
 
 productionChart=new Chart(document.getElementById("productionChart"),{
 
 type:"bar",
-datasets:{
-bar:{
-categoryPercentage:0.6,
-barPercentage:0.7
-}
-}
+
 data:{
 labels:labels,
 datasets:[
 {
-{
 label:"Actual Production",
-data:actual,
+data:actualData,
 backgroundColor:"#2563eb",
 borderRadius:6,
-borderSkipped:false,
-barThickness:18,
-maxBarThickness:18
-}
+barThickness:16
 },
 {
 type:"line",
 label:"Target Production",
-data:target,
+data:targetData,
 borderColor:"red",
-backgroundColor:"transparent",
 tension:0.4,
 borderWidth:3
 }
@@ -616,87 +483,61 @@ borderWidth:3
 options:{
 responsive:true,
 maintainAspectRatio:false,
-
-plugins:{
-legend:{
-position:"bottom"
-}
-},
-
-datasets:{
-bar:{
-categoryPercentage:0.6,
-barPercentage:0.7
-}
-},
-
+plugins:{legend:{position:"bottom"}},
 scales:{
-y:{
-beginAtZero:true,
-grid:{color:"#e5e7eb"}
-},
-x:{
-grid:{display:false}
-}
+y:{beginAtZero:true},
+x:{grid:{display:false}}
 }
 }
 
 });
 
 }
-  async function loadHeatmap(date){
+
+/* HEATMAP */
+
+async function loadHeatmap(date){
 
 const start=new Date(date).getTime();
 const end=start+86400000;
 
-const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${start}&endTs=${end}&limit=5000&agg=NONE`;
+const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${start}&endTs=${end}&limit=5000`;
 
-const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
+const res=await fetch(url,{headers:{"X-Authorization":"Bearer "+JWT}});
 const data=await res.json();
 
 const prod=data.Production_Per_Minute||[];
 const speed=data.Standard_Speed||[];
 
-let hourlyActual={};
-let hourlyTarget={};
+let actual={},target={};
 
 prod.forEach(p=>{
 const h=new Date(p.ts).getHours();
-if(!hourlyActual[h]) hourlyActual[h]=0;
-hourlyActual[h]+=Number(p.value);
+actual[h]=(actual[h]||0)+Number(p.value);
 });
 
 speed.forEach(s=>{
 const h=new Date(s.ts).getHours();
-if(!hourlyTarget[h]) hourlyTarget[h]=0;
-hourlyTarget[h]+=Number(s.value);
+target[h]=(target[h]||0)+Number(s.value);
 });
-
-const nowHour=new Date().getHours();
 
 let html="";
 
 for(let h=0;h<24;h++){
 
-let actual=hourlyActual[h]||0;
-let target=hourlyTarget[h]||0;
+let a=actual[h]||0;
+let t=target[h]||0;
 
-let percent=target>0?(actual/target)*100:0;
+let percent=t>0?(a/t)*100:0;
 
-let color="grayCell";
-
-if(h<=nowHour){
+let color="#ef4444";
 
 if(percent>=95) color="#22c55e";
 else if(percent>=75) color="#f59e0b";
-else color="#ef4444";
-
-}
 
 html+=`
-<div class="heatmapCell" style="background:${h>nowHour?'#cbd5e1':color}">
-<div class="cellHour">${String(h).padStart(2,'0')}:00</div>
-<div class="cellPercent">${h>nowHour?'--':Math.round(percent)+'%'}</div>
+<div class="heatmapCell" style="background:${color}">
+${String(h).padStart(2,'0')}:00<br>${Math.round(percent)}%
 </div>
 `;
 
@@ -710,3 +551,4 @@ document.getElementById("heatmapGrid").innerHTML=html;
 
 </body>
 </html>
+
