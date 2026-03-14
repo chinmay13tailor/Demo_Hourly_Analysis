@@ -244,6 +244,13 @@ font-size:18px;
 background:#cbd5e1;
 color:#475569;
 }
+  .chartCard{
+background:white;
+border-radius:12px;
+padding:20px;
+box-shadow:0 6px 16px rgba(0,0,0,.06);
+max-height:350px;
+}
 
 </style>
 </head>
@@ -344,7 +351,7 @@ Alert: Current production pace is below target. Intervention required to meet ho
 
 <div class="chartTitle">Hourly Production Comparison</div>
 
-<canvas id="productionChart"></canvas>
+<canvas id="productionChart" height="120"></canvas>
 
 </div>
   <div class="heatmapCard">
@@ -579,9 +586,14 @@ data:{
 labels:labels,
 datasets:[
 {
+{
 label:"Actual Production",
 data:actual,
-backgroundColor:"#2563eb"
+backgroundColor:"#2563eb",
+borderRadius:8,
+borderSkipped:false,
+barThickness:35
+}
 },
 {
 type:"line",
@@ -597,12 +609,31 @@ borderWidth:3
 
 options:{
 responsive:true,
+maintainAspectRatio:false,
+
 plugins:{
-legend:{position:"bottom"}
-},
-scales:{
-y:{beginAtZero:true}
+legend:{
+position:"bottom"
 }
+},
+
+layout:{
+padding:{
+top:10,
+bottom:10
+}
+},
+
+scales:{
+y:{
+beginAtZero:true,
+grid:{color:"#e5e7eb"}
+},
+x:{
+grid:{display:false}
+}
+}
+
 }
 
 });
