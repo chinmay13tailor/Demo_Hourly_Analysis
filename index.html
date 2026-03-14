@@ -581,7 +581,12 @@ if(productionChart) productionChart.destroy();
 productionChart=new Chart(document.getElementById("productionChart"),{
 
 type:"bar",
-
+datasets:{
+bar:{
+categoryPercentage:0.6,
+barPercentage:0.7
+}
+}
 data:{
 labels:labels,
 datasets:[
@@ -590,9 +595,10 @@ datasets:[
 label:"Actual Production",
 data:actual,
 backgroundColor:"#2563eb",
-borderRadius:8,
+borderRadius:6,
 borderSkipped:false,
-barThickness:35
+barThickness:18,
+maxBarThickness:18
 }
 },
 {
@@ -617,10 +623,10 @@ position:"bottom"
 }
 },
 
-layout:{
-padding:{
-top:10,
-bottom:10
+datasets:{
+bar:{
+categoryPercentage:0.6,
+barPercentage:0.7
 }
 },
 
@@ -633,7 +639,6 @@ x:{
 grid:{display:false}
 }
 }
-
 }
 
 });
