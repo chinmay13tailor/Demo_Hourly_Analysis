@@ -218,7 +218,7 @@ color:#475569;
 
 <div class="filterBar">
 <input type="date" id="datePicker">
-<button onclick="generateData()">Generate</button>
+<button id="generateBtn">Generate</button>
 </div>
 
 <!-- KPI -->
@@ -317,7 +317,7 @@ Production pace is below target
 </div>
 
 <script>
-
+window.generateData = generateData;
 const API="https://plantwiz.pimateck.in/api";
 const DEVICE_ID="991cf500-661a-11f0-90f1-775fee303094";
 const JWT=new URLSearchParams(location.search).get("token")||"";
@@ -546,6 +546,7 @@ ${String(h).padStart(2,'0')}:00<br>${Math.round(percent)}%
 document.getElementById("heatmapGrid").innerHTML=html;
 
 }
+  document.getElementById("generateBtn").addEventListener("click", generateData);
 
 </script>
 
