@@ -178,6 +178,72 @@ box-shadow:0 6px 16px rgba(0,0,0,.06);
 font-weight:600;
 margin-bottom:10px;
 }
+  /* HEATMAP */
+
+.heatmapCard{
+background:white;
+border-radius:12px;
+padding:20px;
+margin-top:20px;
+box-shadow:0 6px 16px rgba(0,0,0,.06);
+}
+
+.heatmapTitle{
+font-weight:600;
+margin-bottom:10px;
+}
+
+.heatmapLegend{
+display:flex;
+gap:20px;
+font-size:13px;
+margin-bottom:16px;
+}
+
+.legendItem{
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+.legendBox{
+width:14px;
+height:14px;
+border-radius:3px;
+}
+
+.legendBox.green{background:#22c55e;}
+.legendBox.yellow{background:#f59e0b;}
+.legendBox.red{background:#ef4444;}
+
+.heatmapGrid{
+display:grid;
+grid-template-columns:repeat(12,1fr);
+gap:10px;
+}
+
+.heatmapCell{
+padding:12px;
+border-radius:8px;
+text-align:center;
+color:white;
+font-weight:600;
+font-size:14px;
+}
+
+.cellHour{
+font-size:12px;
+opacity:.9;
+}
+
+.cellPercent{
+font-size:18px;
+}
+
+.grayCell{
+background:#cbd5e1;
+color:#475569;
+}
 
 </style>
 </head>
@@ -281,6 +347,29 @@ Alert: Current production pace is below target. Intervention required to meet ho
 <canvas id="productionChart"></canvas>
 
 </div>
+  <div class="heatmapCard">
+
+<div class="heatmapTitle">Production Loss Heatmap</div>
+
+<div class="heatmapLegend">
+
+<span class="legendItem">
+<span class="legendBox green"></span> Target Achieved (>95%)
+</span>
+
+<span class="legendItem">
+<span class="legendBox yellow"></span> Slight Delay (75-95%)
+</span>
+
+<span class="legendItem">
+<span class="legendBox red"></span> Major Loss (<75%)
+</span>
+
+</div>
+
+<div id="heatmapGrid" class="heatmapGrid"></div>
+
+</div>
 
 
 <script>
@@ -305,6 +394,7 @@ return;
 loadProduction(date);
 loadRealtime();
 loadTrend(date);
+loadHeatmap(date);
 
 }
 
@@ -516,6 +606,67 @@ y:{beginAtZero:true}
 }
 
 });
+
+}
+  async function loadHeatmap(date){
+
+const start=new Date(date).getTime();
+const end=start+86400000;
+
+const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${start}&endTs=${end}&limit=5000&agg=NONE`;
+
+const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
+const data=await res.json();
+
+const prod=data.Production_Per_Minute||[];
+const speed=data.Standard_Speed||[];
+
+let hourlyActual={};
+let hourlyTarget={};
+
+prod.forEach(p=>{
+const h=new Date(p.ts).getHours();
+if(!hourlyActual[h]) hourlyActual[h]=0;
+hourlyActual[h]+=Number(p.value);
+});
+
+speed.forEach(s=>{
+const h=new Date(s.ts).getHours();
+if(!hourlyTarget[h]) hourlyTarget[h]=0;
+hourlyTarget[h]+=Number(s.value);
+});
+
+const nowHour=new Date().getHours();
+
+let html="";
+
+for(let h=0;h<24;h++){
+
+let actual=hourlyActual[h]||0;
+let target=hourlyTarget[h]||0;
+
+let percent=target>0?(actual/target)*100:0;
+
+let color="grayCell";
+
+if(h<=nowHour){
+
+if(percent>=95) color="#22c55e";
+else if(percent>=75) color="#f59e0b";
+else color="#ef4444";
+
+}
+
+html+=`
+<div class="heatmapCell" style="background:${h>nowHour?'#cbd5e1':color}">
+<div class="cellHour">${String(h).padStart(2,'0')}:00</div>
+<div class="cellPercent">${h>nowHour?'--':Math.round(percent)+'%'}</div>
+</div>
+`;
+
+}
+
+document.getElementById("heatmapGrid").innerHTML=html;
 
 }
 
