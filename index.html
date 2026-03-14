@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>Production Analytics</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 
 body{
@@ -78,6 +80,7 @@ background:white;
 border-radius:12px;
 padding:20px;
 box-shadow:0 6px 16px rgba(0,0,0,.06);
+margin-bottom:20px;
 }
 
 .statusHeader{
@@ -160,6 +163,20 @@ border-radius:8px;
 font-size:13px;
 color:#b91c1c;
 display:none;
+}
+
+/* CHART */
+
+.chartCard{
+background:white;
+border-radius:12px;
+padding:20px;
+box-shadow:0 6px 16px rgba(0,0,0,.06);
+}
+
+.chartTitle{
+font-weight:600;
+margin-bottom:10px;
 }
 
 </style>
@@ -255,6 +272,16 @@ Alert: Current production pace is below target. Intervention required to meet ho
 
 </div>
 
+<!-- PRODUCTION TREND -->
+
+<div class="chartCard">
+
+<div class="chartTitle">Hourly Production Comparison</div>
+
+<canvas id="productionChart"></canvas>
+
+</div>
+
 
 <script>
 
@@ -262,6 +289,7 @@ const API="https://plantwiz.pimateck.in/api";
 const DEVICE_ID="991cf500-661a-11f0-90f1-775fee303094";
 const JWT=new URLSearchParams(location.search).get("token") || "";
 
+let productionChart;
 
 /* GENERATE BUTTON */
 
@@ -276,9 +304,9 @@ return;
 
 loadProduction(date);
 loadRealtime();
+loadTrend(date);
 
 }
-
 
 /* LOAD PRODUCTION DATA */
 
@@ -289,18 +317,13 @@ const end=start+86400000;
 
 const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute&startTs=${start}&endTs=${end}&limit=5000&agg=NONE`;
 
-const res=await fetch(url,{
-headers:{ "X-Authorization":"Bearer "+JWT }
-});
-
+const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
 const data=await res.json();
 
 calculateKPIs(data.Production_Per_Minute || []);
-
 loadTarget();
 
 }
-
 
 /* LOAD TARGET */
 
@@ -308,10 +331,7 @@ async function loadTarget(){
 
 const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Target_Quantity&limit=1`;
 
-const res=await fetch(url,{
-headers:{ "X-Authorization":"Bearer "+JWT }
-});
-
+const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
 const data=await res.json();
 
 if(data.Target_Quantity){
@@ -326,7 +346,6 @@ window.targetProduction=target;
 
 }
 
-
 /* KPI CALCULATION */
 
 function calculateKPIs(productionData){
@@ -337,14 +356,11 @@ let hourly={};
 productionData.forEach(p=>{
 
 const value=Number(p.value);
-const time=new Date(p.ts);
+const hour=new Date(p.ts).getHours();
 
 total+=value;
 
-const hour=time.getHours();
-
 if(!hourly[hour]) hourly[hour]=0;
-
 hourly[hour]+=value;
 
 });
@@ -354,7 +370,6 @@ document.getElementById("totalProduction").innerText=total;
 if(window.targetProduction){
 
 const ach=((total/window.targetProduction)*100).toFixed(1);
-
 document.getElementById("achievement").innerText=ach+"%";
 
 }
@@ -368,8 +383,8 @@ Object.keys(hourly).forEach(h=>{
 
 const val=hourly[h];
 
-if(val>max){ max=val; best=h; }
-if(val<min){ min=val; worst=h; }
+if(val>max){max=val;best=h;}
+if(val<min){min=val;worst=h;}
 
 });
 
@@ -378,34 +393,22 @@ if(worst!==null) document.getElementById("worstHour").innerText=worst+":00";
 
 }
 
-
-/* REALTIME CALCULATION */
+/* REALTIME STATUS */
 
 async function loadRealtime(){
 
 const now=new Date();
 
-const hourStart=new Date(
-now.getFullYear(),
-now.getMonth(),
-now.getDate(),
-now.getHours(),
-0,
-0
-).getTime();
-
+const hourStart=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours(),0,0).getTime();
 const nowTs=now.getTime();
 
 const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${hourStart}&endTs=${nowTs}&limit=1000&agg=NONE`;
 
-const res=await fetch(url,{
-headers:{ "X-Authorization":"Bearer "+JWT }
-});
-
+const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
 const data=await res.json();
 
-const prod=data.Production_Per_Minute || [];
-const speed=data.Standard_Speed || [];
+const prod=data.Production_Per_Minute||[];
+const speed=data.Standard_Speed||[];
 
 let production=0;
 let targetTillNow=0;
@@ -413,17 +416,12 @@ let targetTillNow=0;
 prod.forEach(p=>production+=Number(p.value));
 speed.forEach(s=>targetTillNow+=Number(s.value));
 
-const currentMinute=now.getMinutes();
-const remaining=60-currentMinute;
+const remaining=60-now.getMinutes();
 
-let latestSpeed=0;
-
-if(speed.length>0)
-latestSpeed=Number(speed[speed.length-1].value);
+let latestSpeed=speed.length?Number(speed[speed.length-1].value):0;
 
 const currentHourTarget=targetTillNow+(latestSpeed*remaining);
 const variance=targetTillNow-production;
-
 const pacePercent=(production/currentHourTarget)*100;
 
 document.getElementById("currentTarget").innerText=Math.round(currentHourTarget);
@@ -436,16 +434,88 @@ document.getElementById("progressFill").style.width=pacePercent+"%";
 document.getElementById("progressLabel").innerText=Math.round(pacePercent)+"%";
 
 if(pacePercent<90){
-
 document.getElementById("statusBadge").innerText="Behind Schedule";
 document.getElementById("alertBox").style.display="block";
-
 }else{
-
 document.getElementById("statusBadge").innerText="On Track";
 document.getElementById("alertBox").style.display="none";
+}
 
 }
+
+/* TREND CHART */
+
+async function loadTrend(date){
+
+const start=new Date(date).getTime();
+const end=start+86400000;
+
+const url=`${API}/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=Production_Per_Minute,Standard_Speed&startTs=${start}&endTs=${end}&limit=5000&agg=NONE`;
+
+const res=await fetch(url,{headers:{ "X-Authorization":"Bearer "+JWT }});
+const data=await res.json();
+
+const prod=data.Production_Per_Minute||[];
+const speed=data.Standard_Speed||[];
+
+let hourlyActual={};
+let hourlyTarget={};
+
+prod.forEach(p=>{
+const hour=new Date(p.ts).getHours();
+if(!hourlyActual[hour]) hourlyActual[hour]=0;
+hourlyActual[hour]+=Number(p.value);
+});
+
+speed.forEach(s=>{
+const hour=new Date(s.ts).getHours();
+if(!hourlyTarget[hour]) hourlyTarget[hour]=0;
+hourlyTarget[hour]+=Number(s.value);
+});
+
+const hours=[...new Set([...Object.keys(hourlyActual),...Object.keys(hourlyTarget)])].sort();
+
+const labels=hours.map(h=>h+":00");
+const actual=hours.map(h=>hourlyActual[h]||0);
+const target=hours.map(h=>hourlyTarget[h]||0);
+
+if(productionChart) productionChart.destroy();
+
+productionChart=new Chart(document.getElementById("productionChart"),{
+
+type:"bar",
+
+data:{
+labels:labels,
+datasets:[
+{
+label:"Actual Production",
+data:actual,
+backgroundColor:"#2563eb"
+},
+{
+type:"line",
+label:"Target Production",
+data:target,
+borderColor:"red",
+backgroundColor:"transparent",
+tension:0.4,
+borderWidth:3
+}
+]
+},
+
+options:{
+responsive:true,
+plugins:{
+legend:{position:"bottom"}
+},
+scales:{
+y:{beginAtZero:true}
+}
+}
+
+});
 
 }
 
